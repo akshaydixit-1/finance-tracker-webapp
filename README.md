@@ -11,7 +11,7 @@ Full-stack personal finance tracker built with ASP.NET Core, React, Tailwind CSS
 1. Update PostgreSQL connection if needed. Default development database:
    - Database: `pftracker_dev`
    - Username: `postgres`
-   - Password: `12345678`
+   - Password: `<Password>`
 2. Restore and run:
    - `dotnet restore`
    - `dotnet run --project backend/src/Api`
