@@ -1,0 +1,9 @@
+/node_modules/
+**/node_modules/
+/deploy/
+/.dotnet/
+/Dockerfile
+/docker-compose.yml
+/docker-compose.yaml
+**/bin/
+**/obj/
