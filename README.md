@@ -5,13 +5,12 @@ Full-stack personal finance tracker built with ASP.NET Core, React, Tailwind CSS
 ## Structure
 - `backend/`: API, application, domain, infrastructure, auth, recurring worker
 - `frontend/`: React app with routing, shared API client, Tailwind, feature pages
-- `deploy/`: Azure and Nginx deployment assets
 
 ## Backend setup
 1. Update PostgreSQL connection if needed. Default development database:
    - Database: `pftracker_dev`
    - Username: `postgres`
-   - Password: `12345678`
+   - Password: `<Password>`
 2. Restore and run:
    - `dotnet restore`
    - `dotnet run --project backend/src/Api`
@@ -23,8 +22,6 @@ Full-stack personal finance tracker built with ASP.NET Core, React, Tailwind CSS
    - `npm install`
    - `npm run dev`
 
-## Docker
-- `docker compose up --build`
 
 ## Notes
 - JWT auth and refresh token flow are implemented.
