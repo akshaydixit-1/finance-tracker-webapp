@@ -10,12 +10,17 @@ using Domain.Enums;
 
 namespace Application.Services;
 
-public sealed class GoalService(IAppDbContext dbContext, ICurrentUserService currentUserService) : IGoalService
+public sealed class GoalService(
+    IAppDbContext dbContext,
+    ICurrentUserService currentUserService,
+    IAccountAccessService accountAccessService) : IGoalService
 {
     public async Task<IReadOnlyCollection<GoalResponse>> GetAsync(CancellationToken cancellationToken)
     {
         var userId = currentUserService.GetUserId();
-        return await dbContext.Goals.Where(x => x.UserId == userId)
+        var readableAccountIds = await accountAccessService.GetReadableAccountIdsAsync(userId, cancellationToken);
+        return await dbContext.Goals
+            .Where(x => (!x.LinkedAccountId.HasValue && x.UserId == userId) || (x.LinkedAccountId.HasValue && readableAccountIds.Contains(x.LinkedAccountId.Value)))
             .OrderBy(x => x.TargetDate)
             .Select(x => new GoalResponse(x.Id, x.Name, x.TargetAmount, x.CurrentAmount, x.TargetDate, x.LinkedAccountId, x.Icon, x.Color, x.Status, x.TargetAmount == 0 ? 0 : (x.CurrentAmount / x.TargetAmount) * 100m))
             .ToListAsync(cancellationToken);
@@ -24,12 +29,20 @@ public sealed class GoalService(IAppDbContext dbContext, ICurrentUserService cur
     public async Task<GoalResponse> CreateAsync(CreateGoalRequest request, CancellationToken cancellationToken)
     {
         if (request.TargetAmount <= 0) throw new AppException("Goal target amount must be greater than zero.");
+        if (request.LinkedAccountId.HasValue)
+        {
+            await accountAccessService.EnsureCanEditAccountAsync(currentUserService.GetUserId(), request.LinkedAccountId.Value, cancellationToken);
+        }
 
         var userId = currentUserService.GetUserId();
         var normalizedName = request.Name.Trim();
-        var duplicateExists = await dbContext.Goals.AnyAsync(
-            x => x.UserId == userId && x.Name.ToLower() == normalizedName.ToLower(),
-            cancellationToken);
+        var duplicateExists = request.LinkedAccountId.HasValue
+            ? await dbContext.Goals.AnyAsync(
+                x => x.LinkedAccountId == request.LinkedAccountId && x.Name.ToLower() == normalizedName.ToLower(),
+                cancellationToken)
+            : await dbContext.Goals.AnyAsync(
+                x => !x.LinkedAccountId.HasValue && x.UserId == userId && x.Name.ToLower() == normalizedName.ToLower(),
+                cancellationToken);
 
         if (duplicateExists)
         {
@@ -53,11 +66,26 @@ public sealed class GoalService(IAppDbContext dbContext, ICurrentUserService cur
 
     public async Task<GoalResponse> UpdateAsync(Guid id, UpdateGoalRequest request, CancellationToken cancellationToken)
     {
-        var entity = await FindOwnedAsync(id, cancellationToken);
+        if (request.LinkedAccountId.HasValue)
+        {
+            await accountAccessService.EnsureCanEditAccountAsync(currentUserService.GetUserId(), request.LinkedAccountId.Value, cancellationToken);
+        }
+
+        var entity = await FindReadableAsync(id, cancellationToken);
+        if (entity.LinkedAccountId.HasValue)
+        {
+            await accountAccessService.EnsureCanEditAccountAsync(currentUserService.GetUserId(), entity.LinkedAccountId.Value, cancellationToken);
+        }
+
         var normalizedName = request.Name.Trim();
-        var duplicateExists = await dbContext.Goals.AnyAsync(
-            x => x.UserId == entity.UserId && x.Id != id && x.Name.ToLower() == normalizedName.ToLower(),
-            cancellationToken);
+        var scopeLinkedAccountId = request.LinkedAccountId ?? entity.LinkedAccountId;
+        var duplicateExists = scopeLinkedAccountId.HasValue
+            ? await dbContext.Goals.AnyAsync(
+                x => x.Id != id && x.LinkedAccountId == scopeLinkedAccountId && x.Name.ToLower() == normalizedName.ToLower(),
+                cancellationToken)
+            : await dbContext.Goals.AnyAsync(
+                x => x.Id != id && !x.LinkedAccountId.HasValue && x.UserId == entity.UserId && x.Name.ToLower() == normalizedName.ToLower(),
+                cancellationToken);
 
         if (duplicateExists)
         {
@@ -79,14 +107,23 @@ public sealed class GoalService(IAppDbContext dbContext, ICurrentUserService cur
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
-        var entity = await FindOwnedAsync(id, cancellationToken);
+        var entity = await FindReadableAsync(id, cancellationToken);
+        if (entity.LinkedAccountId.HasValue)
+        {
+            await accountAccessService.EnsureCanEditAccountAsync(currentUserService.GetUserId(), entity.LinkedAccountId.Value, cancellationToken);
+        }
         dbContext.Remove(entity);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
+
     public async Task<GoalResponse> ContributeAsync(Guid id, GoalContributionRequest request, CancellationToken cancellationToken)
     {
         if (request.Amount <= 0) throw new AppException("Contribution amount must be greater than zero.");
-        var entity = await FindOwnedAsync(id, cancellationToken);
+        var entity = await FindReadableAsync(id, cancellationToken);
+        if (entity.LinkedAccountId.HasValue)
+        {
+            await accountAccessService.EnsureCanEditAccountAsync(currentUserService.GetUserId(), entity.LinkedAccountId.Value, cancellationToken);
+        }
         entity.CurrentAmount += request.Amount;
         if (entity.CurrentAmount >= entity.TargetAmount) entity.Status = GoalStatus.Completed;
         await CreateGoalTransactionAsync(entity, request, TransactionType.Expense, $"Goal contribution: {entity.Name}", cancellationToken);
@@ -98,7 +135,11 @@ public sealed class GoalService(IAppDbContext dbContext, ICurrentUserService cur
     public async Task<GoalResponse> WithdrawAsync(Guid id, GoalContributionRequest request, CancellationToken cancellationToken)
     {
         if (request.Amount <= 0) throw new AppException("Withdraw amount must be greater than zero.");
-        var entity = await FindOwnedAsync(id, cancellationToken);
+        var entity = await FindReadableAsync(id, cancellationToken);
+        if (entity.LinkedAccountId.HasValue)
+        {
+            await accountAccessService.EnsureCanEditAccountAsync(currentUserService.GetUserId(), entity.LinkedAccountId.Value, cancellationToken);
+        }
         if (entity.CurrentAmount < request.Amount) throw new AppException("Insufficient goal balance.");
         entity.CurrentAmount -= request.Amount;
         if (entity.Status == GoalStatus.Completed && entity.CurrentAmount < entity.TargetAmount) entity.Status = GoalStatus.Active;
@@ -111,7 +152,8 @@ public sealed class GoalService(IAppDbContext dbContext, ICurrentUserService cur
     private async Task CreateGoalTransactionAsync(Goal goal, GoalContributionRequest request, TransactionType type, string note, CancellationToken cancellationToken)
     {
         if (!request.SourceAccountId.HasValue) return;
-        var account = await dbContext.Accounts.FirstOrDefaultAsync(x => x.Id == request.SourceAccountId.Value && x.UserId == goal.UserId, cancellationToken)
+        await accountAccessService.EnsureCanEditAccountAsync(currentUserService.GetUserId(), request.SourceAccountId.Value, cancellationToken);
+        var account = await dbContext.Accounts.FirstOrDefaultAsync(x => x.Id == request.SourceAccountId.Value, cancellationToken)
             ?? throw new AppException("Source account not found.");
         if (type == TransactionType.Expense && account.CurrentBalance < request.Amount)
         {
@@ -121,7 +163,7 @@ public sealed class GoalService(IAppDbContext dbContext, ICurrentUserService cur
         dbContext.Update(account);
         await dbContext.AddAsync(new Transaction
         {
-            UserId = goal.UserId,
+            UserId = currentUserService.GetUserId(),
             AccountId = account.Id,
             Type = type,
             Amount = request.Amount,
@@ -132,11 +174,14 @@ public sealed class GoalService(IAppDbContext dbContext, ICurrentUserService cur
         }, cancellationToken);
     }
 
-    private async Task<Goal> FindOwnedAsync(Guid id, CancellationToken cancellationToken)
+    private async Task<Goal> FindReadableAsync(Guid id, CancellationToken cancellationToken)
     {
         var userId = currentUserService.GetUserId();
-        return await dbContext.Goals.FirstOrDefaultAsync(x => x.Id == id && x.UserId == userId, cancellationToken)
-            ?? throw new AppException("Goal not found.", StatusCodes.Status404NotFound);
+        var readableAccountIds = await accountAccessService.GetReadableAccountIdsAsync(userId, cancellationToken);
+        return await dbContext.Goals.FirstOrDefaultAsync(
+                   x => x.Id == id && ((!x.LinkedAccountId.HasValue && x.UserId == userId) || (x.LinkedAccountId.HasValue && readableAccountIds.Contains(x.LinkedAccountId.Value))),
+                   cancellationToken)
+               ?? throw new AppException("Goal not found.", StatusCodes.Status404NotFound);
     }
 
     private static GoalResponse Map(Goal goal)
@@ -145,4 +190,3 @@ public sealed class GoalService(IAppDbContext dbContext, ICurrentUserService cur
         return new GoalResponse(goal.Id, goal.Name, goal.TargetAmount, goal.CurrentAmount, goal.TargetDate, goal.LinkedAccountId, goal.Icon, goal.Color, goal.Status, progress);
     }
 }
-

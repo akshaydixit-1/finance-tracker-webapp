@@ -39,6 +39,8 @@ public sealed record UpdateTransactionRequest(
     string? PaymentMethod,
     IReadOnlyCollection<string>? Tags);
 
+public sealed record ImportTransactionsRequest(IReadOnlyCollection<CreateTransactionRequest> Items);
+
 public sealed record TransactionResponse(
     Guid Id,
     Guid AccountId,
@@ -51,4 +53,5 @@ public sealed record TransactionResponse(
     string? Note,
     string? PaymentMethod,
     IReadOnlyCollection<string> Tags,
+    IReadOnlyCollection<string> RuleAlerts,
     DateTime CreatedAtUtc);

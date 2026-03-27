@@ -4,9 +4,12 @@ using Application.DTOs.Auth;
 using Application.DTOs.Budgets;
 using Application.DTOs.Categories;
 using Application.DTOs.Dashboard;
+using Application.DTOs.Forecast;
 using Application.DTOs.Goals;
+using Application.DTOs.Insights;
 using Application.DTOs.RecurringTransactions;
 using Application.DTOs.Reports;
+using Application.DTOs.Rules;
 using Application.DTOs.Transactions;
 
 namespace Application.Abstractions.Services;
@@ -28,6 +31,10 @@ public interface IAccountService
     Task<AccountResponse> UpdateAsync(Guid id, UpdateAccountRequest request, CancellationToken cancellationToken);
     Task DeleteAsync(Guid id, CancellationToken cancellationToken);
     Task TransferAsync(TransferFundsRequest request, CancellationToken cancellationToken);
+    Task<IReadOnlyCollection<AccountMemberResponse>> GetMembersAsync(Guid accountId, CancellationToken cancellationToken);
+    Task<IReadOnlyCollection<AccountActivityResponse>> GetActivityAsync(Guid accountId, CancellationToken cancellationToken);
+    Task InviteMemberAsync(Guid accountId, InviteAccountMemberRequest request, CancellationToken cancellationToken);
+    Task UpdateMemberRoleAsync(Guid accountId, Guid memberUserId, UpdateAccountMemberRoleRequest request, CancellationToken cancellationToken);
 }
 
 public interface ICategoryService
@@ -79,10 +86,42 @@ public interface IReportService
     Task<IReadOnlyCollection<CategorySpendReportItem>> GetCategorySpendAsync(ReportFilterRequest request, CancellationToken cancellationToken);
     Task<IReadOnlyCollection<IncomeExpenseTrendItem>> GetIncomeVsExpenseAsync(ReportFilterRequest request, CancellationToken cancellationToken);
     Task<IReadOnlyCollection<AccountBalanceTrendItem>> GetAccountBalanceTrendAsync(ReportFilterRequest request, CancellationToken cancellationToken);
+    Task<IReadOnlyCollection<CategoryTrendItem>> GetCategoryTrendsAsync(ReportFilterRequest request, CancellationToken cancellationToken);
+    Task<IReadOnlyCollection<SavingsRateTrendReportItem>> GetSavingsRateTrendAsync(ReportFilterRequest request, CancellationToken cancellationToken);
+    Task<IReadOnlyCollection<NetWorthPoint>> GetNetWorthTrendAsync(ReportFilterRequest request, CancellationToken cancellationToken);
     Task<string> ExportTransactionsCsvAsync(ReportFilterRequest request, CancellationToken cancellationToken);
 }
 
 public interface IDashboardService
 {
     Task<DashboardResponse> GetAsync(CancellationToken cancellationToken);
+}
+
+public interface IForecastService
+{
+    Task<ForecastMonthResponse> GetMonthForecastAsync(CancellationToken cancellationToken);
+    Task<IReadOnlyCollection<ForecastDailyPoint>> GetDailyForecastAsync(CancellationToken cancellationToken);
+}
+
+public interface IInsightsService
+{
+    Task<HealthScoreResponse> GetHealthScoreAsync(CancellationToken cancellationToken);
+    Task<InsightsResponse> GetInsightsAsync(CancellationToken cancellationToken);
+}
+
+public interface IRuleService
+{
+    Task<IReadOnlyCollection<RuleResponse>> GetAsync(CancellationToken cancellationToken);
+    Task<RuleResponse> CreateAsync(CreateRuleRequest request, CancellationToken cancellationToken);
+    Task<RuleResponse> UpdateAsync(Guid id, UpdateRuleRequest request, CancellationToken cancellationToken);
+    Task DeleteAsync(Guid id, CancellationToken cancellationToken);
+}
+
+public interface IAccountAccessService
+{
+    Task<IReadOnlyCollection<Guid>> GetReadableAccountIdsAsync(Guid userId, CancellationToken cancellationToken);
+    Task<IReadOnlyCollection<Guid>> GetEditableAccountIdsAsync(Guid userId, CancellationToken cancellationToken);
+    Task EnsureCanReadAccountAsync(Guid userId, Guid accountId, CancellationToken cancellationToken);
+    Task EnsureCanEditAccountAsync(Guid userId, Guid accountId, CancellationToken cancellationToken);
+    Task EnsureCanManageMembersAsync(Guid userId, Guid accountId, CancellationToken cancellationToken);
 }

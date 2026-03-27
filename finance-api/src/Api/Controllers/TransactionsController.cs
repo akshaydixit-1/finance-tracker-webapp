@@ -20,6 +20,18 @@ public sealed class TransactionsController(ITransactionService transactionServic
     [HttpPost]
     public Task<TransactionResponse> Create([FromBody] CreateTransactionRequest request, CancellationToken cancellationToken) => transactionService.CreateAsync(request, cancellationToken);
 
+    [HttpPost("import")]
+    public async Task<IReadOnlyCollection<TransactionResponse>> Import([FromBody] ImportTransactionsRequest request, CancellationToken cancellationToken)
+    {
+        var result = new List<TransactionResponse>();
+        foreach (var item in request.Items)
+        {
+            result.Add(await transactionService.CreateAsync(item, cancellationToken));
+        }
+
+        return result;
+    }
+
     [HttpPut("{id:guid}")]
     public Task<TransactionResponse> Update(Guid id, [FromBody] UpdateTransactionRequest request, CancellationToken cancellationToken) => transactionService.UpdateAsync(id, request, cancellationToken);
 

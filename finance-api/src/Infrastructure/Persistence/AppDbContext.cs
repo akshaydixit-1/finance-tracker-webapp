@@ -15,6 +15,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<Budget> BudgetsSet => Set<Budget>();
     public DbSet<Goal> GoalsSet => Set<Goal>();
     public DbSet<RecurringTransaction> RecurringTransactionsSet => Set<RecurringTransaction>();
+    public DbSet<Rule> RulesSet => Set<Rule>();
+    public DbSet<AccountMember> AccountMembersSet => Set<AccountMember>();
+    public DbSet<AccountActivity> AccountActivitiesSet => Set<AccountActivity>();
 
     public IQueryable<ApplicationUser> Users => UsersSet;
     public IQueryable<RefreshToken> RefreshTokens => RefreshTokensSet;
@@ -25,6 +28,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public IQueryable<Budget> Budgets => BudgetsSet;
     public IQueryable<Goal> Goals => GoalsSet;
     public IQueryable<RecurringTransaction> RecurringTransactions => RecurringTransactionsSet;
+    public IQueryable<Rule> Rules => RulesSet;
+    public IQueryable<AccountMember> AccountMembers => AccountMembersSet;
+    public IQueryable<AccountActivity> AccountActivities => AccountActivitiesSet;
 
     public Task AddAsync<T>(T entity, CancellationToken cancellationToken = default) where T : class => Set<T>().AddAsync(entity, cancellationToken).AsTask();
     public void Update<T>(T entity) where T : class => Set<T>().Update(entity);
@@ -87,6 +93,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(x => x.Merchant).HasMaxLength(200);
             entity.Property(x => x.PaymentMethod).HasMaxLength(50);
             entity.Property(x => x.Tags).HasColumnType("text[]");
+            entity.Property(x => x.RuleAlerts).HasColumnType("text[]");
         });
 
         modelBuilder.Entity<Budget>(entity =>
@@ -94,7 +101,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.ToTable("budgets");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Amount).HasColumnType("numeric(12,2)");
-            entity.HasIndex(x => new { x.UserId, x.CategoryId, x.Month, x.Year }).IsUnique();
+            entity.HasIndex(x => new { x.UserId, x.AccountId, x.CategoryId, x.Month, x.Year }).IsUnique();
         });
 
         modelBuilder.Entity<Goal>(entity =>
@@ -117,6 +124,40 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(x => x.Type).HasConversion<string>();
             entity.Property(x => x.Amount).HasColumnType("numeric(12,2)");
             entity.Property(x => x.Frequency).HasConversion<string>();
+        });
+
+        modelBuilder.Entity<Rule>(entity =>
+        {
+            entity.ToTable("rules");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.ConditionJson).HasColumnName("condition_json").HasColumnType("text");
+            entity.Property(x => x.ActionJson).HasColumnName("action_json").HasColumnType("text");
+            entity.Property(x => x.ConditionField).HasConversion<string>();
+            entity.Property(x => x.ConditionOperator).HasConversion<string>();
+            entity.Property(x => x.ConditionValue).HasMaxLength(240);
+            entity.Property(x => x.ActionType).HasConversion<string>();
+            entity.Property(x => x.ActionValue).HasMaxLength(240);
+            entity.Property(x => x.IsActive).HasDefaultValue(true);
+            entity.HasIndex(x => new { x.UserId, x.Priority });
+        });
+
+        modelBuilder.Entity<AccountMember>(entity =>
+        {
+            entity.ToTable("account_members");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Role).HasConversion<string>();
+            entity.HasIndex(x => new { x.AccountId, x.UserId }).IsUnique();
+            entity.HasOne(x => x.Account).WithMany(x => x.Members).HasForeignKey(x => x.AccountId);
+        });
+
+        modelBuilder.Entity<AccountActivity>(entity =>
+        {
+            entity.ToTable("account_activities");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Action).HasMaxLength(120);
+            entity.Property(x => x.EntityType).HasMaxLength(60);
+            entity.Property(x => x.Metadata).HasMaxLength(500);
+            entity.HasIndex(x => new { x.AccountId, x.CreatedAtUtc });
         });
 
         base.OnModelCreating(modelBuilder);

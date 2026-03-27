@@ -3,28 +3,33 @@ using Application.Abstractions.Auth;
 using Application.Abstractions.Persistence;
 using Application.Abstractions.Services;
 using Application.DTOs.Dashboard;
-using Domain.Entities;
 using Domain.Enums;
 
 namespace Application.Services;
 
-public sealed class DashboardService(IAppDbContext dbContext, ICurrentUserService currentUserService) : IDashboardService
+public sealed class DashboardService(
+    IAppDbContext dbContext,
+    ICurrentUserService currentUserService,
+    IAccountAccessService accountAccessService,
+    IForecastService forecastService,
+    IInsightsService insightsService) : IDashboardService
 {
     public async Task<DashboardResponse> GetAsync(CancellationToken cancellationToken)
     {
         var userId = currentUserService.GetUserId();
+        var readableAccountIds = await accountAccessService.GetReadableAccountIdsAsync(userId, cancellationToken);
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var month = today.Month;
         var year = today.Year;
 
         var transactions = await dbContext.Transactions
-            .Where(x => x.UserId == userId)
+            .Where(x => readableAccountIds.Contains(x.AccountId))
             .OrderByDescending(x => x.TransactionDate)
             .ThenByDescending(x => x.CreatedAtUtc)
             .ToListAsync(cancellationToken);
 
         var accounts = await dbContext.Accounts
-            .Where(x => x.UserId == userId)
+            .Where(x => readableAccountIds.Contains(x.Id))
             .ToListAsync(cancellationToken);
 
         var categories = await dbContext.Categories
@@ -42,7 +47,7 @@ public sealed class DashboardService(IAppDbContext dbContext, ICurrentUserServic
             .ToListAsync(cancellationToken);
 
         var goalsData = await dbContext.Goals
-            .Where(x => x.UserId == userId)
+            .Where(x => x.UserId == userId || (x.LinkedAccountId.HasValue && readableAccountIds.Contains(x.LinkedAccountId.Value)))
             .OrderByDescending(x => x.TargetDate)
             .ToListAsync(cancellationToken);
 
@@ -96,7 +101,7 @@ public sealed class DashboardService(IAppDbContext dbContext, ICurrentUserServic
             .Select(x =>
             {
                 var actualSpend = monthTransactions
-                    .Where(t => t.Type == TransactionType.Expense && t.CategoryId == x.CategoryId)
+                    .Where(t => t.Type == TransactionType.Expense && t.CategoryId == x.CategoryId && (!x.AccountId.HasValue || t.AccountId == x.AccountId.Value))
                     .Sum(t => t.Amount);
 
                 var categoryName = categoryLookup.TryGetValue(x.CategoryId, out var value) ? value : "Category";
@@ -120,6 +125,10 @@ public sealed class DashboardService(IAppDbContext dbContext, ICurrentUserServic
                 x.TargetAmount == 0 ? 0 : (x.CurrentAmount / x.TargetAmount) * 100m))
             .ToList();
 
+        var forecastMonth = await forecastService.GetMonthForecastAsync(cancellationToken);
+        var forecastDaily = await forecastService.GetDailyForecastAsync(cancellationToken);
+        var health = await insightsService.GetHealthScoreAsync(cancellationToken);
+
         return new DashboardResponse(
             new[]
             {
@@ -128,6 +137,11 @@ public sealed class DashboardService(IAppDbContext dbContext, ICurrentUserServic
                 new DashboardSummaryCard("Net Balance", balance, "primary"),
                 new DashboardSummaryCard("Savings", goalsValue, "warning")
             },
+            health.Score,
+            forecastMonth.ForecastedEndOfMonthBalance,
+            forecastMonth.SafeToSpendAmount,
+            forecastDaily.Select(x => new DashboardForecastPoint(x.Date, x.ProjectedBalance)).ToList(),
+            forecastMonth.RiskWarnings,
             budgetProgress,
             categorySpend,
             incomeExpenseTrend,

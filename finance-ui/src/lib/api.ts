@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAuthStore } from '../store/authStore';
 
 const baseURL = import.meta.env.VITE_API_URL ?? 'http://localhost:5170/api';
 
@@ -21,11 +22,9 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('pft_access_token');
-      localStorage.removeItem('pft_refresh_token');
-      localStorage.removeItem('pft_user');
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+      useAuthStore.getState().logout();
+      if (window.location.pathname !== '/') {
+        window.location.href = '/';
       }
     }
     return Promise.reject(error);

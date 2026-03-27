@@ -42,7 +42,7 @@ export function RegisterPage() {
     onSuccess: (data) => {
       setAuth(data);
       pushToast({ title: 'Account created', message: 'Your account was created successfully.', variant: 'success' });
-      navigate('/');
+      navigate('/app');
     },
     onError: (error) => {
       pushToast({ title: 'Signup failed', message: getApiErrorMessage(error, 'Please review your details and try again.'), variant: 'error' });

@@ -5,6 +5,11 @@ public sealed record BudgetProgressItem(Guid Id, string Category, decimal Budget
 public sealed record UpcomingRecurringItem(Guid Id, string Title, decimal Amount, DateOnly NextRunDate);
 public sealed record DashboardResponse(
     IReadOnlyCollection<DashboardSummaryCard> SummaryCards,
+    decimal FinancialHealthScore,
+    decimal ProjectedEndOfMonthBalance,
+    decimal SafeToSpendAmount,
+    IReadOnlyCollection<DashboardForecastPoint> ForecastDaily,
+    IReadOnlyCollection<string> ForecastWarnings,
     IReadOnlyCollection<BudgetProgressItem> BudgetProgress,
     IReadOnlyCollection<CategorySpendChartItem> CategorySpend,
     IReadOnlyCollection<TrendChartItem> IncomeVsExpense,
@@ -15,3 +20,4 @@ public sealed record CategorySpendChartItem(string Category, decimal Amount);
 public sealed record TrendChartItem(string Period, decimal Income, decimal Expense);
 public sealed record RecentTransactionItem(Guid Id, string Merchant, decimal Amount, string Type, DateOnly Date);
 public sealed record GoalProgressItem(Guid Id, string Name, decimal CurrentAmount, decimal TargetAmount, decimal ProgressPercent);
+public sealed record DashboardForecastPoint(DateOnly Date, decimal ProjectedBalance);

@@ -17,6 +17,140 @@ body {
   box-sizing: border-box;
 }
 
+/* Keep form controls readable in the default (light) surface. */
+input:not([type='checkbox']):not([type='radio']):not([type='color']),
+select,
+textarea {
+  background-color: #ffffff;
+  color: #0f172a;
+  border-color: #cbd5e1;
+  border-radius: 0.62rem !important;
+  padding: calc(0.32rem + 4px) 0.68rem !important;
+  min-height: 1.95rem;
+  line-height: 1.15;
+  font-size: 0.82rem !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #64748b;
+}
+
+textarea {
+  min-height: 5rem;
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 2.05rem !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.62rem center;
+  background-size: 0.95rem;
+}
+
+select option {
+  color: #0f172a;
+  background: #ffffff;
+}
+
+/* Dark shell overrides for section/list readability. */
+.app-shell-dark .bg-slate-50 {
+  background-color: #1e293b !important;
+}
+
+.app-shell-dark .bg-white {
+  background-color: #0f172a !important;
+}
+
+.app-shell-dark .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+.app-shell-dark .text-slate-600 {
+  color: #cbd5e1 !important;
+}
+
+.app-shell-dark .text-slate-700 {
+  color: #e2e8f0 !important;
+}
+
+.app-shell-dark .border-slate-100,
+.app-shell-dark .border-slate-200,
+.app-shell-dark .border-slate-300 {
+  border-color: #334155 !important;
+}
+
+.app-shell-dark .divide-slate-100 {
+  border-color: #334155 !important;
+}
+
+.app-shell-dark input:not([type='checkbox']):not([type='radio']):not([type='color']),
+.app-shell-dark select,
+.app-shell-dark textarea {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+  border-color: #334155 !important;
+}
+
+.app-shell-dark input::placeholder,
+.app-shell-dark textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+.app-shell-dark select option {
+  color: #e2e8f0;
+  background: #0f172a;
+}
+
+.app-shell-dark select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+}
+
+.rounded-3xl {
+  border-radius: 0.82rem !important;
+}
+
+.rounded-2xl {
+  border-radius: 0.72rem !important;
+}
+
+.rounded-xl {
+  border-radius: 0.6rem !important;
+}
+
+.rounded-lg {
+  border-radius: 0.5rem !important;
+}
+
+form.grid {
+  row-gap: 0.95rem !important;
+  column-gap: 0.95rem !important;
+}
+
+button {
+  min-height: 1.95rem;
+  font-size: 0.82rem;
+  line-height: 1.1;
+}
+
+form button {
+  padding-top: calc(0.5rem + 4px) !important;
+  padding-bottom: calc(0.5rem + 4px) !important;
+}
+
+button.p-2,
+button.p-1 {
+  min-height: auto;
+  font-size: inherit;
+}
+
+.text-sm {
+  font-size: 0.82rem !important;
+}
+
 .card-grid {
   display: grid;
   gap: 1rem;

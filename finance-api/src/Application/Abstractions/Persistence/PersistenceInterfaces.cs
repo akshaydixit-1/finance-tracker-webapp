@@ -13,6 +13,9 @@ public interface IAppDbContext
     IQueryable<Budget> Budgets { get; }
     IQueryable<Goal> Goals { get; }
     IQueryable<RecurringTransaction> RecurringTransactions { get; }
+    IQueryable<Rule> Rules { get; }
+    IQueryable<AccountMember> AccountMembers { get; }
+    IQueryable<AccountActivity> AccountActivities { get; }
 
     Task AddAsync<T>(T entity, CancellationToken cancellationToken = default) where T : class;
     void Update<T>(T entity) where T : class;

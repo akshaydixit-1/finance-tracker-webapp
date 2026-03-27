@@ -20,6 +20,24 @@ public sealed class ReportsController(IReportService reportService) : Controller
     [HttpGet("account-balance-trend")]
     public Task<IReadOnlyCollection<AccountBalanceTrendItem>> AccountBalanceTrend([FromQuery] ReportFilterRequest request, CancellationToken cancellationToken) => reportService.GetAccountBalanceTrendAsync(request, cancellationToken);
 
+    [HttpGet("trends")]
+    public async Task<IActionResult> Trends([FromQuery] ReportFilterRequest request, CancellationToken cancellationToken)
+    {
+        var categoryTrends = await reportService.GetCategoryTrendsAsync(request, cancellationToken);
+        var incomeExpense = await reportService.GetIncomeVsExpenseAsync(request, cancellationToken);
+        var savingsRate = await reportService.GetSavingsRateTrendAsync(request, cancellationToken);
+        return Ok(new
+        {
+            categoryTrends,
+            incomeExpense,
+            savingsRate
+        });
+    }
+
+    [HttpGet("net-worth")]
+    public Task<IReadOnlyCollection<NetWorthPoint>> NetWorth([FromQuery] ReportFilterRequest request, CancellationToken cancellationToken)
+        => reportService.GetNetWorthTrendAsync(request, cancellationToken);
+
     [HttpGet("export")]
     public async Task<FileContentResult> Export([FromQuery] ReportFilterRequest request, CancellationToken cancellationToken)
     {

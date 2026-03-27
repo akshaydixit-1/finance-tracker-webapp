@@ -7,6 +7,7 @@ type AuthState = {
   accessToken: string | null;
   refreshToken: string | null;
   setAuth: (payload: AuthResponse) => void;
+  updateUser: (payload: Pick<User, 'displayName' | 'email'>) => void;
   logout: () => void;
 };
 
@@ -22,6 +23,12 @@ export const useAuthStore = create<AuthState>()(
         localStorage.setItem('pft_user', JSON.stringify(payload.user));
         set({ user: payload.user, accessToken: payload.accessToken, refreshToken: payload.refreshToken });
       },
+      updateUser: (payload) => set((state) => {
+        if (!state.user) return state;
+        const nextUser = { ...state.user, ...payload };
+        localStorage.setItem('pft_user', JSON.stringify(nextUser));
+        return { ...state, user: nextUser };
+      }),
       logout: () => {
         localStorage.removeItem('pft_access_token');
         localStorage.removeItem('pft_refresh_token');

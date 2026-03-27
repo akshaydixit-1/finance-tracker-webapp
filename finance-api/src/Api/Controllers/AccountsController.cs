@@ -31,5 +31,26 @@ public sealed class AccountsController(IAccountService accountService) : Control
         await accountService.TransferAsync(request, cancellationToken);
         return Ok(new { message = "Transfer completed successfully." });
     }
-}
 
+    [HttpGet("{id:guid}/members")]
+    public Task<IReadOnlyCollection<AccountMemberResponse>> GetMembers(Guid id, CancellationToken cancellationToken)
+        => accountService.GetMembersAsync(id, cancellationToken);
+
+    [HttpPost("{id:guid}/invite")]
+    public async Task<IActionResult> Invite(Guid id, [FromBody] InviteAccountMemberRequest request, CancellationToken cancellationToken)
+    {
+        await accountService.InviteMemberAsync(id, request, cancellationToken);
+        return Ok(new { message = "Invitation processed successfully." });
+    }
+
+    [HttpPut("{id:guid}/members/{userId:guid}")]
+    public async Task<IActionResult> UpdateMemberRole(Guid id, Guid userId, [FromBody] UpdateAccountMemberRoleRequest request, CancellationToken cancellationToken)
+    {
+        await accountService.UpdateMemberRoleAsync(id, userId, request, cancellationToken);
+        return Ok(new { message = "Member role updated successfully." });
+    }
+
+    [HttpGet("{id:guid}/activity")]
+    public Task<IReadOnlyCollection<AccountActivityResponse>> GetActivity(Guid id, CancellationToken cancellationToken)
+        => accountService.GetActivityAsync(id, cancellationToken);
+}

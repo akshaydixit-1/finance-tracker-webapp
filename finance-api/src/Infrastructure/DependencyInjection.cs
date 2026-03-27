@@ -31,12 +31,16 @@ public static class DependencyInjection
         services.AddScoped<ITokenService, TokenService>();
 
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IAccountAccessService, AccountAccessService>();
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<ITransactionService, TransactionService>();
         services.AddScoped<IBudgetService, BudgetService>();
         services.AddScoped<IGoalService, GoalService>();
         services.AddScoped<IRecurringTransactionService, RecurringTransactionService>();
+        services.AddScoped<IRuleService, RuleService>();
+        services.AddScoped<IForecastService, ForecastService>();
+        services.AddScoped<IInsightsService, InsightsService>();
         services.AddScoped<IReportService, ReportService>();
         services.AddScoped<IDashboardService, DashboardService>();
 

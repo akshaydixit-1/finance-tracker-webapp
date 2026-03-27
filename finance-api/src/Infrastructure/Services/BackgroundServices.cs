@@ -1,19 +1,20 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using Application.Abstractions.Services;
 using Infrastructure.Persistence;
 using Infrastructure.Persistence.Seed;
 
 namespace Infrastructure.Services;
 
-public sealed class StartupInitializationService(IServiceProvider serviceProvider, ILogger<StartupInitializationService> logger, IHostEnvironment environment) : IHostedService
+public sealed class StartupInitializationService(IServiceProvider serviceProvider, ILogger<StartupInitializationService> logger, IHostEnvironment environment, IConfiguration configuration) : IHostedService
 {
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        await DatabaseInitializer.InitialiseAsync(dbContext, environment, cancellationToken);
+        await DatabaseInitializer.InitialiseAsync(dbContext, environment, configuration, cancellationToken);
         logger.LogInformation("Database initialization completed.");
     }
 
