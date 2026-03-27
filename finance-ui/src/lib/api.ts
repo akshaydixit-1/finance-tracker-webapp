@@ -2,7 +2,13 @@ import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
 const env = (import.meta as any)?.env ?? {};
-const baseURL = env.VITE_API_BASE_URL ?? env.VITE_API_URL ?? 'http://localhost:5170/api';
+const configuredBaseUrl = env.VITE_API_BASE_URL ?? env.VITE_API_URL;
+
+if (env.PROD && !configuredBaseUrl) {
+  throw new Error('Missing VITE_API_BASE_URL for production build.');
+}
+
+const baseURL = configuredBaseUrl ?? 'http://localhost:5170/api';
 
 export const api = axios.create({
   baseURL,
