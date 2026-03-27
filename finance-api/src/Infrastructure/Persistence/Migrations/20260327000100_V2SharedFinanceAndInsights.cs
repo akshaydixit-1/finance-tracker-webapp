@@ -79,6 +79,12 @@ public partial class V2SharedFinanceAndInsights : Migration
             ADD COLUMN IF NOT EXISTS "AccountId" uuid NULL;
             """);
 
+        migrationBuilder.Sql("""DROP INDEX IF EXISTS "IX_budgets_UserId_CategoryId_Month_Year";""");
+        migrationBuilder.Sql("""
+            CREATE UNIQUE INDEX IF NOT EXISTS "IX_budgets_UserId_AccountId_CategoryId_Month_Year"
+            ON budgets ("UserId", "AccountId", "CategoryId", "Month", "Year");
+            """);
+
         migrationBuilder.Sql("""
             ALTER TABLE rules
             ADD COLUMN IF NOT EXISTS "ConditionJson" text NOT NULL DEFAULT '{}';
