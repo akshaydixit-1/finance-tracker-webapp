@@ -5,13 +5,12 @@ using Application.Abstractions.Persistence;
 using Application.Abstractions.Services;
 using Application.Common.Exceptions;
 using Application.DTOs.RecurringTransactions;
-using Application.DTOs.Transactions;
 using Domain.Entities;
 using Domain.Enums;
 
 namespace Application.Services;
 
-public sealed class RecurringTransactionService(IAppDbContext dbContext, ICurrentUserService currentUserService, ITransactionService transactionService) : IRecurringTransactionService
+public sealed class RecurringTransactionService(IAppDbContext dbContext, ICurrentUserService currentUserService) : IRecurringTransactionService
 {
     public async Task<IReadOnlyCollection<RecurringTransactionResponse>> GetAsync(CancellationToken cancellationToken)
     {
@@ -77,7 +76,37 @@ public sealed class RecurringTransactionService(IAppDbContext dbContext, ICurren
         {
             if (item.AccountId.HasValue)
             {
-                await transactionService.CreateAsync(new CreateTransactionRequest(item.AccountId.Value, null, item.CategoryId, item.Type, item.Amount, item.NextRunDate, item.Title, $"Recurring: {item.Title}", null, Array.Empty<string>(), item.Id), cancellationToken);
+                var account = await dbContext.Accounts.FirstOrDefaultAsync(x => x.Id == item.AccountId.Value, cancellationToken);
+                if (account is not null && account.UserId == item.UserId)
+                {
+                    var transaction = new Transaction
+                    {
+                        UserId = item.UserId,
+                        AccountId = item.AccountId.Value,
+                        CategoryId = item.CategoryId,
+                        Type = item.Type,
+                        Amount = item.Amount,
+                        TransactionDate = item.NextRunDate,
+                        Merchant = item.Title,
+                        Note = $"Recurring: {item.Title}",
+                        PaymentMethod = null,
+                        Tags = new List<string> { "recurring-auto" },
+                        RuleAlerts = new List<string>(),
+                        RecurringTransactionId = item.Id
+                    };
+
+                    if (transaction.Type == TransactionType.Income)
+                    {
+                        account.CurrentBalance += transaction.Amount;
+                    }
+                    else if (transaction.Type == TransactionType.Expense)
+                    {
+                        account.CurrentBalance -= transaction.Amount;
+                    }
+
+                    await dbContext.AddAsync(transaction, cancellationToken);
+                    dbContext.Update(account);
+                }
             }
             item.NextRunDate = item.Frequency switch
             {
