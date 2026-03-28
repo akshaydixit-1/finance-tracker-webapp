@@ -277,25 +277,29 @@ export function DashboardPage() {
             <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-fuchsia-500" />{currentYear}</div>
           </div>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={expenseChartData} barGap={8} barCategoryGap="38%">
-                <CartesianGrid strokeDasharray="3 3" stroke={gridLine} />
-                <XAxis dataKey="label" stroke={isDark ? '#94a3b8' : '#64748b'} />
-                <YAxis stroke={isDark ? '#94a3b8' : '#64748b'} tickFormatter={(v) => `${Math.round(Number(v) / 1000)}k`} />
-                <Tooltip
-                  formatter={(value: number) => formatCurrency(value)}
-                  cursor={{ fill: 'transparent' }}
-                  contentStyle={{
-                    borderRadius: 10,
-                    border: isDark ? '1px solid #334155' : '1px solid #cbd5e1',
-                    background: isDark ? '#0f172a' : '#ffffff',
-                    color: isDark ? '#e2e8f0' : '#0f172a',
-                  }}
-                />
-                <Bar dataKey="income" name={String(previousYear)} fill="#34d399" radius={[6, 6, 0, 0]} maxBarSize={10} />
-                <Bar dataKey="expenses" name={String(currentYear)} fill="#d946ef" radius={[6, 6, 0, 0]} maxBarSize={10} />
-              </BarChart>
-            </ResponsiveContainer>
+            {expenseChartData.length ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={expenseChartData} barGap={8} barCategoryGap="38%">
+                  <CartesianGrid strokeDasharray="3 3" stroke={gridLine} />
+                  <XAxis dataKey="label" stroke={isDark ? '#94a3b8' : '#64748b'} />
+                  <YAxis stroke={isDark ? '#94a3b8' : '#64748b'} tickFormatter={(v) => `${Math.round(Number(v) / 1000)}k`} />
+                  <Tooltip
+                    formatter={(value: number) => formatCurrency(value)}
+                    cursor={{ fill: 'transparent' }}
+                    contentStyle={{
+                      borderRadius: 10,
+                      border: isDark ? '1px solid #334155' : '1px solid #cbd5e1',
+                      background: isDark ? '#0f172a' : '#ffffff',
+                      color: isDark ? '#e2e8f0' : '#0f172a',
+                    }}
+                  />
+                  <Bar dataKey="income" name={String(previousYear)} fill="#34d399" radius={[6, 6, 0, 0]} maxBarSize={10} />
+                  <Bar dataKey="expenses" name={String(currentYear)} fill="#d946ef" radius={[6, 6, 0, 0]} maxBarSize={10} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className={`flex h-full items-center justify-center rounded-lg border border-dashed text-sm ${muted}`}>No expense data available.</div>
+            )}
           </div>
         </article>
 
@@ -309,26 +313,30 @@ export function DashboardPage() {
             <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-fuchsia-500" />{currentYear}</div>
           </div>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={revenueChartDataView}>
-                <defs>
-                  <linearGradient id="revA" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="5%" stopColor="#34d399" stopOpacity={0.45} />
-                    <stop offset="95%" stopColor="#34d399" stopOpacity={0.04} />
-                  </linearGradient>
-                  <linearGradient id="revB" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="5%" stopColor="#d946ef" stopOpacity={0.40} />
-                    <stop offset="95%" stopColor="#d946ef" stopOpacity={0.04} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={gridLine} />
-                <XAxis dataKey="label" stroke={isDark ? '#94a3b8' : '#64748b'} />
-                <YAxis stroke={isDark ? '#94a3b8' : '#64748b'} tickFormatter={(v) => `${Math.round(Number(v) / 1000)}k`} />
-                <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                <Area type="monotone" dataKey="revenueA" name={String(previousYear)} stroke="#34d399" fill="url(#revA)" strokeWidth={2.2} />
-                <Area type="monotone" dataKey="revenueB" name={String(currentYear)} stroke="#d946ef" fill="url(#revB)" strokeWidth={2.2} />
-              </AreaChart>
-            </ResponsiveContainer>
+            {revenueChartDataView.length ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={revenueChartDataView}>
+                  <defs>
+                    <linearGradient id="revA" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="5%" stopColor="#34d399" stopOpacity={0.45} />
+                      <stop offset="95%" stopColor="#34d399" stopOpacity={0.04} />
+                    </linearGradient>
+                    <linearGradient id="revB" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="5%" stopColor="#d946ef" stopOpacity={0.40} />
+                      <stop offset="95%" stopColor="#d946ef" stopOpacity={0.04} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke={gridLine} />
+                  <XAxis dataKey="label" stroke={isDark ? '#94a3b8' : '#64748b'} />
+                  <YAxis stroke={isDark ? '#94a3b8' : '#64748b'} tickFormatter={(v) => `${Math.round(Number(v) / 1000)}k`} />
+                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                  <Area type="monotone" dataKey="revenueA" name={String(previousYear)} stroke="#34d399" fill="url(#revA)" strokeWidth={2.2} />
+                  <Area type="monotone" dataKey="revenueB" name={String(currentYear)} stroke="#d946ef" fill="url(#revB)" strokeWidth={2.2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className={`flex h-full items-center justify-center rounded-lg border border-dashed text-sm ${muted}`}>No revenue data available.</div>
+            )}
           </div>
         </article>
       </section>
@@ -383,15 +391,19 @@ export function DashboardPage() {
             <p className={`text-sm ${muted}`}>Advanced insight from income vs expense over time.</p>
           </div>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={savingsTrendData}>
-                <CartesianGrid strokeDasharray="3 3" stroke={gridLine} />
-                <XAxis dataKey="period" stroke={isDark ? '#94a3b8' : '#64748b'} />
-                <YAxis stroke={isDark ? '#94a3b8' : '#64748b'} tickFormatter={(v) => `${Number(v).toFixed(0)}%`} />
-                <Tooltip formatter={(value: number) => `${Number(value).toFixed(1)}%`} />
-                <Line type="monotone" dataKey="savingsRate" stroke="#34d399" strokeWidth={2.5} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
+            {savingsTrendData.length ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={savingsTrendData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={gridLine} />
+                  <XAxis dataKey="period" stroke={isDark ? '#94a3b8' : '#64748b'} />
+                  <YAxis stroke={isDark ? '#94a3b8' : '#64748b'} tickFormatter={(v) => `${Number(v).toFixed(0)}%`} />
+                  <Tooltip formatter={(value: number) => `${Number(value).toFixed(1)}%`} />
+                  <Line type="monotone" dataKey="savingsRate" stroke="#34d399" strokeWidth={2.5} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className={`flex h-full items-center justify-center rounded-lg border border-dashed text-sm ${muted}`}>No savings trend data available.</div>
+            )}
           </div>
         </article>
       </section>
@@ -459,30 +471,36 @@ export function DashboardPage() {
               <h3 className="text-lg font-semibold">Categories</h3>
               <span className={`text-xs ${muted}`}>{selected.label}</span>
             </div>
-            <div className="relative h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={categoryItems} dataKey="amount" nameKey="category" innerRadius={60} outerRadius={94} stroke="none" cornerRadius={4}>
-                    {categoryItems.map((entry) => <Cell key={entry.category} fill={entry.color} />)}
-                  </Pie>
-                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                <div className="text-2xl font-bold">{formatCurrency(categoryTotal)}</div>
-                <div className={`text-sm font-semibold ${categoryTrendPercent >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {categoryTrendPercent >= 0 ? '+' : ''}{categoryTrendPercent.toFixed(0)}%
+            {categoryItems.length ? (
+              <>
+                <div className="relative h-56">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={categoryItems} dataKey="amount" nameKey="category" innerRadius={60} outerRadius={94} stroke="none" cornerRadius={4}>
+                        {categoryItems.map((entry) => <Cell key={entry.category} fill={entry.color} />)}
+                      </Pie>
+                      <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                    <div className="text-2xl font-bold">{formatCurrency(categoryTotal)}</div>
+                    <div className={`text-sm font-semibold ${categoryTrendPercent >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {categoryTrendPercent >= 0 ? '+' : ''}{categoryTrendPercent.toFixed(0)}%
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              {categoryItems.map((item) => (
-                <div key={item.category} className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: item.color }} />
-                  <span className="font-semibold">{item.category} - {item.percent}%</span>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  {categoryItems.map((item) => (
+                    <div key={item.category} className="flex items-center gap-2">
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: item.color }} />
+                      <span className="font-semibold">{item.category} - {item.percent}%</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </>
+            ) : (
+              <div className={`flex h-56 items-center justify-center rounded-lg border border-dashed text-sm ${muted}`}>No category data available.</div>
+            )}
           </article>
 
           <article className={`rounded-2xl border p-4 ${surface}`}>

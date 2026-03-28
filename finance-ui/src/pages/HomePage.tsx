@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BadgeIndianRupee, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
@@ -74,7 +74,15 @@ export function HomePage() {
   const [authView, setAuthView] = useState<'signin' | 'signup' | 'forgot' | null>(null);
   const navigate = useNavigate();
   const { accessToken } = useAuthStore();
+  const persistedToken = typeof window !== 'undefined' ? localStorage.getItem('pft_access_token') : null;
+  const token = accessToken ?? persistedToken;
   const closeModal = () => setAuthView(null);
+
+  useEffect(() => {
+    if (token) {
+      navigate('/app', { replace: true });
+    }
+  }, [navigate, token]);
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-[#1f1d3b] text-white">
@@ -85,7 +93,7 @@ export function HomePage() {
 
       <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col px-6 py-5 sm:px-8 sm:py-6 lg:px-10">
         <header className="flex items-center justify-between gap-3">
-          <button className="flex items-center gap-2 rounded-2xl bg-white/10 px-3 py-2 sm:px-4" onClick={() => navigate('/app')}>
+          <button className="flex items-center gap-2 rounded-2xl bg-white/10 px-3 py-2 sm:px-4" onClick={() => navigate(token ? '/app' : '/')}>
             <BadgeIndianRupee size={18} />
             <span className="font-semibold tracking-wide">FinTrack</span>
           </button>

@@ -176,20 +176,27 @@ public sealed class TransactionService(
             switch (rule.ActionType)
             {
                 case RuleActionType.SetCategory:
-                    var actionCategoryName = rule.ActionValue.Trim();
+                    var actionCategoryName = rule.ActionValue?.Trim();
+                    if (string.IsNullOrWhiteSpace(actionCategoryName)) break;
                     var category = await dbContext.Categories.FirstOrDefaultAsync(
                         x => x.UserId == userId && x.Name.ToLower() == actionCategoryName.ToLower(),
                         cancellationToken);
                     if (category is not null) categoryId = category.Id;
                     break;
                 case RuleActionType.AddTag:
-                    if (!tags.Contains(rule.ActionValue.Trim(), StringComparer.OrdinalIgnoreCase))
+                    var tagValue = rule.ActionValue?.Trim();
+                    if (string.IsNullOrWhiteSpace(tagValue)) break;
+                    if (!tags.Contains(tagValue, StringComparer.OrdinalIgnoreCase))
                     {
-                        tags.Add(rule.ActionValue.Trim());
+                        tags.Add(tagValue);
                     }
                     break;
                 case RuleActionType.TriggerAlert:
-                    alerts.Add(rule.ActionValue.Trim());
+                    var alertValue = rule.ActionValue?.Trim();
+                    if (!string.IsNullOrWhiteSpace(alertValue))
+                    {
+                        alerts.Add(alertValue);
+                    }
                     break;
             }
         }
@@ -209,7 +216,8 @@ public sealed class TransactionService(
             _ => string.Empty
         };
 
-        var right = rule.ConditionValue.Trim();
+        var right = rule.ConditionValue?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(right)) return false;
         return rule.ConditionOperator switch
         {
             RuleOperator.Equals => left.Equals(right, StringComparison.OrdinalIgnoreCase) || left.Split('|').Any(x => x.Equals(right, StringComparison.OrdinalIgnoreCase)),
