@@ -146,10 +146,11 @@ export function TransactionsPage() {
     onError: (error) => pushToast({ title: 'Import failed', message: getApiErrorMessage(error, 'Unable to import transactions.'), variant: 'error' }),
   });
 
-  const TransactionForm = ({ form, type, submitLabel, onSubmit }: { form: ReturnType<typeof useForm<TransactionFormValues>>; type: 'create' | 'edit'; submitLabel: string; onSubmit: (values: TransactionFormValues) => void; }) => (
+  const TransactionForm = ({ form, type, submitLabel, submitting, onSubmit }: { form: ReturnType<typeof useForm<TransactionFormValues>>; type: 'create' | 'edit'; submitLabel: string; submitting: boolean; onSubmit: (values: TransactionFormValues) => void; }) => (
     <form
       className="grid grid-cols-1 gap-3 md:grid-cols-2"
       onSubmit={form.handleSubmit((values) => {
+        if (submitting) return;
         if (!validateTransfer(values)) return;
         onSubmit(values);
       })}
@@ -167,7 +168,7 @@ export function TransactionsPage() {
       <div><FieldLabel htmlFor={`${type}-payment`} hint="Optional method like card, cash, or bank transfer.">Payment Method</FieldLabel><input id={`${type}-payment`} className="w-full rounded-2xl border border-slate-200 px-4 py-2" placeholder="e.g. Credit Card" {...form.register('paymentMethod')} /></div>
       <div><FieldLabel htmlFor={`${type}-tags`} hint="Optional comma-separated tags for search and filters.">Tags</FieldLabel><input id={`${type}-tags`} className="w-full rounded-2xl border border-slate-200 px-4 py-2" placeholder="e.g. groceries, monthly" {...form.register('tags')} /></div>
       <div className="md:col-span-2"><FieldLabel htmlFor={`${type}-note`} hint="Optional short note for this entry.">Note</FieldLabel><textarea id={`${type}-note`} className="w-full rounded-2xl border border-slate-200 px-4 py-2" placeholder="Add short details..." {...form.register('note')} /></div>
-      <button className="rounded-2xl bg-slate-950 px-4 py-2 text-white md:col-span-2" type="submit">{submitLabel}</button>
+      <button className="rounded-2xl bg-slate-950 px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-60 md:col-span-2" type="submit" disabled={submitting}>{submitLabel}</button>
     </form>
   );
 
@@ -176,7 +177,7 @@ export function TransactionsPage() {
       <Tabs items={tabItems} value={activeTab} onChange={setActiveTab} />
 
       <TabPanel active={activeTab} id="create">
-        <TransactionForm form={createForm} type="create" submitLabel="Save transaction" onSubmit={(values) => createMutation.mutate({ ...toPayload(values), recurringTransactionId: null })} />
+        <TransactionForm form={createForm} type="create" submitLabel="Save transaction" submitting={createMutation.isPending} onSubmit={(values) => createMutation.mutate({ ...toPayload(values), recurringTransactionId: null })} />
       </TabPanel>
 
       <TabPanel active={activeTab} id="import">
@@ -189,9 +190,11 @@ export function TransactionsPage() {
             placeholder='[{"accountId":"...","type":2,"amount":5600,"date":"2026-03-26"}]'
           />
           <button
-            className="mt-3 rounded-xl border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700"
+            className="mt-3 rounded-xl border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
             type="button"
+            disabled={importMutation.isPending}
             onClick={() => {
+              if (importMutation.isPending) return;
               try {
                 const items = JSON.parse(importPayload);
                 if (!Array.isArray(items) || items.length === 0) {
@@ -270,7 +273,7 @@ export function TransactionsPage() {
       </TabPanel>
 
       <Modal open={!!editingTransaction} title="Edit transaction" onClose={() => setEditingTransaction(null)}>
-        <TransactionForm form={editForm} type="edit" submitLabel="Update transaction" onSubmit={(values) => {
+        <TransactionForm form={editForm} type="edit" submitLabel="Update transaction" submitting={updateMutation.isPending} onSubmit={(values) => {
           if (!editingTransaction) return;
           updateMutation.mutate({ id: editingTransaction.id, payload: toPayload(values) });
         }} />

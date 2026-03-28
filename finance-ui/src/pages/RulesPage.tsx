@@ -92,7 +92,10 @@ export function RulesPage() {
       <Tabs items={tabs} value={activeTab} onChange={setActiveTab} />
 
       <TabPanel active={activeTab} id="create">
-        <form className="grid grid-cols-1 gap-3 md:grid-cols-2" onSubmit={createForm.handleSubmit((values) => createMutation.mutate(toPayload(values)))}>
+        <form className="grid grid-cols-1 gap-3 md:grid-cols-2" onSubmit={createForm.handleSubmit((values) => {
+          if (createMutation.isPending) return;
+          createMutation.mutate(toPayload(values));
+        })}>
           <div><FieldLabel htmlFor="field" hint="Transaction field to evaluate, such as merchant or amount.">Condition field</FieldLabel><select id="field" className="w-full rounded-2xl border border-slate-200 px-4 py-2" {...createForm.register('conditionField')}>{Object.keys(ruleFieldMap).map((x) => <option key={x}>{x}</option>)}</select></div>
           <div><FieldLabel htmlFor="operator" hint="How to compare the selected field with the value.">Operator</FieldLabel><select id="operator" className="w-full rounded-2xl border border-slate-200 px-4 py-2" {...createForm.register('conditionOperator')}>{Object.keys(ruleOperatorMap).map((x) => <option key={x}>{x}</option>)}</select></div>
           <div><FieldLabel htmlFor="condition-value" hint="Value to match against the condition field.">Condition value</FieldLabel><input id="condition-value" className="w-full rounded-2xl border border-slate-200 px-4 py-2" placeholder="e.g. Uber" {...createForm.register('conditionValue', { required: true })} /></div>
@@ -100,7 +103,7 @@ export function RulesPage() {
           <div><FieldLabel htmlFor="action-value" hint="Value used by the selected action.">Action value</FieldLabel><input id="action-value" className="w-full rounded-2xl border border-slate-200 px-4 py-2" placeholder="e.g. Transport" {...createForm.register('actionValue', { required: true })} /></div>
           <div><FieldLabel htmlFor="priority" hint="Lower numbers run first when multiple rules match.">Priority</FieldLabel><input id="priority" className="w-full rounded-2xl border border-slate-200 px-4 py-2" type="number" placeholder="e.g. 1" {...createForm.register('priority', { valueAsNumber: true, min: 0 })} /></div>
           <label className="flex items-center gap-2 rounded-2xl bg-slate-50 px-4 py-2 text-sm text-slate-700 md:col-span-2"><input type="checkbox" {...createForm.register('isActive')} /> Rule is active</label>
-          <button className="rounded-2xl bg-slate-950 px-4 py-2 text-white md:col-span-2" type="submit">Save rule</button>
+          <button className="rounded-2xl bg-slate-950 px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-60 md:col-span-2" type="submit" disabled={createMutation.isPending}>Save rule</button>
         </form>
       </TabPanel>
 
@@ -159,7 +162,11 @@ export function RulesPage() {
       </TabPanel>
 
       <Modal open={!!editing} title="Edit rule" onClose={() => setEditing(null)}>
-        <form className="grid grid-cols-1 gap-3 md:grid-cols-2" onSubmit={editForm.handleSubmit((values) => editing ? updateMutation.mutate({ id: editing.id, payload: toPayload(values) }) : null)}>
+        <form className="grid grid-cols-1 gap-3 md:grid-cols-2" onSubmit={editForm.handleSubmit((values) => {
+          if (updateMutation.isPending) return;
+          if (!editing) return;
+          updateMutation.mutate({ id: editing.id, payload: toPayload(values) });
+        })}>
           <div><FieldLabel htmlFor="edit-field" hint="Field the rule checks before applying action.">Condition field</FieldLabel><select id="edit-field" className="w-full rounded-2xl border border-slate-200 px-4 py-2" {...editForm.register('conditionField')}>{Object.keys(ruleFieldMap).map((x) => <option key={x}>{x}</option>)}</select></div>
           <div><FieldLabel htmlFor="edit-operator" hint="Comparison operator used for the condition.">Operator</FieldLabel><select id="edit-operator" className="w-full rounded-2xl border border-slate-200 px-4 py-2" {...editForm.register('conditionOperator')}>{Object.keys(ruleOperatorMap).map((x) => <option key={x}>{x}</option>)}</select></div>
           <div><FieldLabel htmlFor="edit-condition-value" hint="Value matched by the rule condition.">Condition value</FieldLabel><input id="edit-condition-value" className="w-full rounded-2xl border border-slate-200 px-4 py-2" placeholder="e.g. Uber" {...editForm.register('conditionValue', { required: true })} /></div>
@@ -167,7 +174,7 @@ export function RulesPage() {
           <div><FieldLabel htmlFor="edit-action-value" hint="Action target value.">Action value</FieldLabel><input id="edit-action-value" className="w-full rounded-2xl border border-slate-200 px-4 py-2" placeholder="e.g. Transport" {...editForm.register('actionValue', { required: true })} /></div>
           <div><FieldLabel htmlFor="edit-priority" hint="Rule execution order priority.">Priority</FieldLabel><input id="edit-priority" className="w-full rounded-2xl border border-slate-200 px-4 py-2" type="number" placeholder="e.g. 1" {...editForm.register('priority', { valueAsNumber: true, min: 0 })} /></div>
           <label className="flex items-center gap-2 rounded-2xl bg-slate-50 px-4 py-2 text-sm text-slate-700 md:col-span-2"><input type="checkbox" {...editForm.register('isActive')} /> Rule is active</label>
-          <button className="rounded-2xl bg-slate-950 px-4 py-2 text-white md:col-span-2" type="submit">Update rule</button>
+          <button className="rounded-2xl bg-slate-950 px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-60 md:col-span-2" type="submit" disabled={updateMutation.isPending}>Update rule</button>
         </form>
       </Modal>
 

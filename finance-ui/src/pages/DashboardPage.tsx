@@ -48,6 +48,16 @@ function pct(current: number, previous: number) {
   return ((current - previous) / Math.abs(previous)) * 100;
 }
 
+function deltaWithBaseline(current: number, previous: number, hasBaseline: boolean) {
+  if (!hasBaseline) {
+    return { deltaValue: 0, deltaPct: 0 };
+  }
+  return {
+    deltaValue: current - previous,
+    deltaPct: pct(current, previous),
+  };
+}
+
 export function DashboardPage() {
   const { isDark } = useThemeStore();
   const [kpiPeriod, setKpiPeriod] = useState<KpiPeriodKey>('last_month');
@@ -82,8 +92,10 @@ export function DashboardPage() {
 
   const selected = kpiPeriodOptions.find((x) => x.value === kpiPeriod)!;
   const trend = data.incomeVsExpense;
-  const currentSlice = trend.slice(-selected.points);
-  const previousSlice = trend.slice(-selected.points * 2, -selected.points);
+  const selectedPoints = selected.value === 'lifetime' ? trend.length : Math.min(selected.points, trend.length);
+  const currentSlice = trend.slice(-selectedPoints);
+  const previousSlice = selected.value === 'lifetime' ? [] : trend.slice(-selectedPoints * 2, -selectedPoints);
+  const hasBaseline = previousSlice.length > 0;
 
   const currentIncome = currentSlice.reduce((sum, row) => sum + row.income, 0);
   const currentExpense = currentSlice.reduce((sum, row) => sum + row.expense, 0);
@@ -92,35 +104,40 @@ export function DashboardPage() {
   const previousExpense = previousSlice.reduce((sum, row) => sum + row.expense, 0);
   const previousSavings = previousIncome - previousExpense;
   const balanceNow = data.summaryCards.find((x) => x.label.toLowerCase() === 'balance')?.value ?? data.projectedEndOfMonthBalance;
-  const prevBalance = balanceNow - currentSavings;
+  const prevBalance = hasBaseline ? balanceNow - currentSavings : balanceNow;
+
+  const incomeDelta = deltaWithBaseline(currentIncome, previousIncome, hasBaseline);
+  const expenseDelta = deltaWithBaseline(currentExpense, previousExpense, hasBaseline);
+  const balanceDelta = deltaWithBaseline(balanceNow, prevBalance, hasBaseline);
+  const savingsDelta = deltaWithBaseline(currentSavings, previousSavings, hasBaseline);
 
   const kpis = [
     {
       label: 'Income',
       value: currentIncome,
-      deltaValue: currentIncome - previousIncome,
-      deltaPct: pct(currentIncome, previousIncome),
+      deltaValue: incomeDelta.deltaValue,
+      deltaPct: incomeDelta.deltaPct,
       accent: '#22d3ee',
     },
     {
       label: 'Expenses',
       value: currentExpense,
-      deltaValue: currentExpense - previousExpense,
-      deltaPct: pct(currentExpense, previousExpense),
+      deltaValue: expenseDelta.deltaValue,
+      deltaPct: expenseDelta.deltaPct,
       accent: '#a855f7',
     },
     {
       label: 'Balance',
       value: balanceNow,
-      deltaValue: balanceNow - prevBalance,
-      deltaPct: pct(balanceNow, prevBalance),
+      deltaValue: balanceDelta.deltaValue,
+      deltaPct: balanceDelta.deltaPct,
       accent: '#f59e0b',
     },
     {
       label: 'Savings',
       value: currentSavings,
-      deltaValue: currentSavings - previousSavings,
-      deltaPct: pct(currentSavings, previousSavings),
+      deltaValue: savingsDelta.deltaValue,
+      deltaPct: savingsDelta.deltaPct,
       accent: '#34d399',
     },
   ];
@@ -273,8 +290,8 @@ export function DashboardPage() {
             <span className={`text-xs ${muted}`}>{selected.label}</span>
           </div>
           <div className={`mb-2 flex items-center gap-5 text-xs ${muted}`}>
-            <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-cyan-400" />{previousYear}</div>
-            <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-fuchsia-500" />{currentYear}</div>
+            <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-cyan-400" />Income</div>
+            <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-fuchsia-500" />Expenses</div>
           </div>
           <div className="h-64">
             {expenseChartData.length ? (
@@ -293,8 +310,8 @@ export function DashboardPage() {
                       color: isDark ? '#e2e8f0' : '#0f172a',
                     }}
                   />
-                  <Bar dataKey="income" name={String(previousYear)} fill="#34d399" radius={[6, 6, 0, 0]} maxBarSize={10} />
-                  <Bar dataKey="expenses" name={String(currentYear)} fill="#d946ef" radius={[6, 6, 0, 0]} maxBarSize={10} />
+                  <Bar dataKey="income" name="Income" fill="#34d399" radius={[6, 6, 0, 0]} maxBarSize={10} />
+                  <Bar dataKey="expenses" name="Expenses" fill="#d946ef" radius={[6, 6, 0, 0]} maxBarSize={10} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -309,8 +326,8 @@ export function DashboardPage() {
             <span className={`text-xs ${muted}`}>{selected.label}</span>
           </div>
           <div className={`mb-2 flex items-center gap-5 text-xs ${muted}`}>
-            <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-emerald-400" />{previousYear}</div>
-            <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-fuchsia-500" />{currentYear}</div>
+            <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-emerald-400" />Income</div>
+            <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-fuchsia-500" />Expenses</div>
           </div>
           <div className="h-64">
             {revenueChartDataView.length ? (
@@ -330,8 +347,8 @@ export function DashboardPage() {
                   <XAxis dataKey="label" stroke={isDark ? '#94a3b8' : '#64748b'} />
                   <YAxis stroke={isDark ? '#94a3b8' : '#64748b'} tickFormatter={(v) => `${Math.round(Number(v) / 1000)}k`} />
                   <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                  <Area type="monotone" dataKey="revenueA" name={String(previousYear)} stroke="#34d399" fill="url(#revA)" strokeWidth={2.2} />
-                  <Area type="monotone" dataKey="revenueB" name={String(currentYear)} stroke="#d946ef" fill="url(#revB)" strokeWidth={2.2} />
+                  <Area type="monotone" dataKey="revenueA" name="Income" stroke="#34d399" fill="url(#revA)" strokeWidth={2.2} />
+                  <Area type="monotone" dataKey="revenueB" name="Expenses" stroke="#d946ef" fill="url(#revB)" strokeWidth={2.2} />
                 </AreaChart>
               </ResponsiveContainer>
             ) : (

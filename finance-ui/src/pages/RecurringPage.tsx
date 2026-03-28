@@ -92,17 +92,20 @@ export function RecurringPage() {
       <TabPanel active={activeTab} id="create">
         <form
           className="grid grid-cols-1 gap-3 md:grid-cols-2"
-          onSubmit={createForm.handleSubmit((values) => createMutation.mutate({
-            title: values.title,
-            type: transactionTypeMap[values.type],
-            amount: Number(values.amount),
-            categoryId: values.categoryId || null,
-            accountId: values.accountId || null,
-            frequency: recurringFrequencyMap[values.frequency],
-            startDate: values.startDate,
-            endDate: values.endDate || null,
-            autoCreateTransaction: values.autoCreateTransaction,
-          }))}
+          onSubmit={createForm.handleSubmit((values) => {
+            if (createMutation.isPending) return;
+            createMutation.mutate({
+              title: values.title,
+              type: transactionTypeMap[values.type],
+              amount: Number(values.amount),
+              categoryId: values.categoryId || null,
+              accountId: values.accountId || null,
+              frequency: recurringFrequencyMap[values.frequency],
+              startDate: values.startDate,
+              endDate: values.endDate || null,
+              autoCreateTransaction: values.autoCreateTransaction,
+            });
+          })}
         >
           <div><FieldLabel htmlFor="recurring-title" hint="Name used to identify this recurring entry.">Title</FieldLabel><input id="recurring-title" className="w-full rounded-2xl border border-slate-200 px-4 py-2" placeholder="e.g. Rent Payment" {...createForm.register('title', { required: true })} /></div>
           <div><FieldLabel htmlFor="recurring-type" hint="Choose whether this recurring entry is income or expense.">Type</FieldLabel><select id="recurring-type" className="w-full rounded-2xl border border-slate-200 px-4 py-2" {...createForm.register('type')}><option>Expense</option><option>Income</option></select></div>
@@ -113,7 +116,7 @@ export function RecurringPage() {
           <div><FieldLabel htmlFor="recurring-start-date" hint="Date this recurring schedule starts.">Start Date</FieldLabel><input id="recurring-start-date" className="w-full rounded-2xl border border-slate-200 px-4 py-2" type="date" placeholder="Select start date" {...createForm.register('startDate', { required: true })} /></div>
           <div><FieldLabel htmlFor="recurring-end-date" hint="Optional date when this schedule should stop.">End Date</FieldLabel><input id="recurring-end-date" className="w-full rounded-2xl border border-slate-200 px-4 py-2" type="date" placeholder="Select end date" {...createForm.register('endDate')} /></div>
           <label className="flex items-center gap-2 text-sm text-slate-700 md:col-span-2"><input type="checkbox" {...createForm.register('autoCreateTransaction')} /> Auto-create transaction</label>
-          <button className="rounded-2xl bg-slate-950 px-4 py-2 text-white md:col-span-2" type="submit">Save recurring item</button>
+          <button className="rounded-2xl bg-slate-950 px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-60 md:col-span-2" type="submit" disabled={createMutation.isPending}>Save recurring item</button>
         </form>
       </TabPanel>
 
@@ -162,6 +165,7 @@ export function RecurringPage() {
         <form
           className="grid grid-cols-1 gap-3 md:grid-cols-2"
           onSubmit={editForm.handleSubmit((values) => {
+            if (updateMutation.isPending) return;
             if (!editingItem) return;
             updateMutation.mutate({
               id: editingItem.id,
@@ -183,7 +187,7 @@ export function RecurringPage() {
           <div><FieldLabel htmlFor="edit-recurring-title" hint="Update the recurring entry name.">Title</FieldLabel><input id="edit-recurring-title" className="w-full rounded-2xl border border-slate-200 px-4 py-2" placeholder="e.g. Rent Payment" {...editForm.register('title', { required: true })} /></div>
           <div><FieldLabel htmlFor="edit-recurring-amount" hint="Update amount used in each run.">Amount</FieldLabel><input id="edit-recurring-amount" className="w-full rounded-2xl border border-slate-200 px-4 py-2" type="number" step="0.01" placeholder="e.g. 25000" {...editForm.register('amount', { required: true, min: 0.01 })} /></div>
           <div><FieldLabel htmlFor="edit-recurring-frequency" hint="Update how often this entry repeats.">Frequency</FieldLabel><select id="edit-recurring-frequency" className="w-full rounded-2xl border border-slate-200 px-4 py-2" {...editForm.register('frequency')}><option>Daily</option><option>Weekly</option><option>Monthly</option><option>Yearly</option></select></div>
-          <button className="rounded-2xl bg-slate-950 px-4 py-2 text-white md:col-span-2" type="submit">Update recurring item</button>
+          <button className="rounded-2xl bg-slate-950 px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-60 md:col-span-2" type="submit" disabled={updateMutation.isPending}>Update recurring item</button>
         </form>
       </Modal>
 

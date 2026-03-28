@@ -92,31 +92,37 @@ export function GoalsPage() {
       <TabPanel active={activeTab} id="create">
         <form
           className="grid grid-cols-1 gap-3 md:grid-cols-2"
-          onSubmit={goalForm.handleSubmit((values) => createGoal.mutate({
-            name: values.name,
-            targetAmount: Number(values.targetAmount),
-            targetDate: values.targetDate || null,
-            linkedAccountId: values.linkedAccountId || null,
-            icon: values.icon || 'PiggyBank',
-            color: values.color || '#059669',
-          }))}
+          onSubmit={goalForm.handleSubmit((values) => {
+            if (createGoal.isPending) return;
+            createGoal.mutate({
+              name: values.name,
+              targetAmount: Number(values.targetAmount),
+              targetDate: values.targetDate || null,
+              linkedAccountId: values.linkedAccountId || null,
+              icon: values.icon || 'PiggyBank',
+              color: values.color || '#059669',
+            });
+          })}
         >
           <div><FieldLabel htmlFor="goal-name" hint="Set a short name for this savings goal.">Goal Name</FieldLabel><input id="goal-name" className="w-full rounded-2xl border border-slate-200 px-4 py-2" placeholder="e.g. Vacation Fund" {...goalForm.register('name', { required: true })} /></div>
           <div><FieldLabel htmlFor="goal-target" hint="Total amount you want to reach.">Target Amount</FieldLabel><input id="goal-target" className="w-full rounded-2xl border border-slate-200 px-4 py-2" type="number" step="0.01" placeholder="e.g. 150000" {...goalForm.register('targetAmount', { required: true, min: 0.01 })} /></div>
           <div><FieldLabel htmlFor="goal-date" hint="Optional deadline for this goal.">Target Date</FieldLabel><input id="goal-date" className="w-full rounded-2xl border border-slate-200 px-4 py-2" type="date" placeholder="Select target date" {...goalForm.register('targetDate')} /></div>
           <div><FieldLabel htmlFor="goal-account" hint="Optional account tied to this goal.">Linked Account</FieldLabel><select id="goal-account" className="w-full rounded-2xl border border-slate-200 px-4 py-2" {...goalForm.register('linkedAccountId')}><option value="">Link account (optional)</option>{accounts?.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}</select></div>
-          <button className="rounded-2xl bg-slate-950 px-4 py-2 text-white md:col-span-2" type="submit">Create goal</button>
+          <button className="rounded-2xl bg-slate-950 px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-60 md:col-span-2" type="submit" disabled={createGoal.isPending}>Create goal</button>
         </form>
       </TabPanel>
 
       <TabPanel active={activeTab} id="contribute">
-        <form className="grid grid-cols-1 gap-3 md:grid-cols-2" onSubmit={contributionForm.handleSubmit((values) => contributeGoal.mutate({ goalId: values.goalId, amount: Number(values.amount), sourceAccountId: values.sourceAccountId || null, note: values.note || null, date: values.date }))}>
+        <form className="grid grid-cols-1 gap-3 md:grid-cols-2" onSubmit={contributionForm.handleSubmit((values) => {
+          if (contributeGoal.isPending) return;
+          contributeGoal.mutate({ goalId: values.goalId, amount: Number(values.amount), sourceAccountId: values.sourceAccountId || null, note: values.note || null, date: values.date });
+        })}>
           <div><FieldLabel htmlFor="contribution-goal" hint="Choose which goal this contribution belongs to.">Goal</FieldLabel><select id="contribution-goal" className="w-full rounded-2xl border border-slate-200 px-4 py-2" {...contributionForm.register('goalId', { required: true })}><option value="">Select goal</option>{goals?.map((goal) => <option key={goal.id} value={goal.id}>{goal.name}</option>)}</select></div>
           <div><FieldLabel htmlFor="contribution-amount" hint="Amount to add to the selected goal.">Amount</FieldLabel><input id="contribution-amount" className="w-full rounded-2xl border border-slate-200 px-4 py-2" type="number" step="0.01" placeholder="e.g. 5000" {...contributionForm.register('amount', { required: true, min: 0.01 })} /></div>
           <div><FieldLabel htmlFor="contribution-account" hint="Optional account where this contribution came from.">Source Account</FieldLabel><select id="contribution-account" className="w-full rounded-2xl border border-slate-200 px-4 py-2" {...contributionForm.register('sourceAccountId')}><option value="">Source account</option>{accounts?.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}</select></div>
           <div><FieldLabel htmlFor="contribution-note" hint="Optional note for this contribution.">Note</FieldLabel><input id="contribution-note" className="w-full rounded-2xl border border-slate-200 px-4 py-2" placeholder="e.g. Bonus contribution" {...contributionForm.register('note')} /></div>
           <div><FieldLabel htmlFor="contribution-date" hint="Date when this contribution was made.">Date</FieldLabel><input id="contribution-date" className="w-full rounded-2xl border border-slate-200 px-4 py-2" type="date" placeholder="Select contribution date" {...contributionForm.register('date', { required: true })} /></div>
-          <button className="rounded-2xl bg-brand-500 px-4 py-2 text-white md:col-span-2" type="submit">Contribute</button>
+          <button className="rounded-2xl bg-brand-500 px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-60 md:col-span-2" type="submit" disabled={contributeGoal.isPending}>Contribute</button>
         </form>
       </TabPanel>
 
@@ -163,6 +169,7 @@ export function GoalsPage() {
         <form
           className="grid grid-cols-1 gap-3 md:grid-cols-2"
           onSubmit={editGoalForm.handleSubmit((values) => {
+            if (updateGoal.isPending) return;
             if (!editingGoal) return;
             updateGoal.mutate({
               id: editingGoal.id,
@@ -181,7 +188,7 @@ export function GoalsPage() {
           <div><FieldLabel htmlFor="edit-goal-name" hint="Update the goal name.">Goal Name</FieldLabel><input id="edit-goal-name" className="w-full rounded-2xl border border-slate-200 px-4 py-2" placeholder="e.g. Vacation Fund" {...editGoalForm.register('name', { required: true })} /></div>
           <div><FieldLabel htmlFor="edit-goal-target" hint="Update the target amount to reach.">Target Amount</FieldLabel><input id="edit-goal-target" className="w-full rounded-2xl border border-slate-200 px-4 py-2" type="number" step="0.01" placeholder="e.g. 150000" {...editGoalForm.register('targetAmount', { required: true, min: 0.01 })} /></div>
           <div><FieldLabel htmlFor="edit-goal-date" hint="Update or clear the target date.">Target Date</FieldLabel><input id="edit-goal-date" className="w-full rounded-2xl border border-slate-200 px-4 py-2" type="date" placeholder="Select target date" {...editGoalForm.register('targetDate')} /></div>
-          <button className="rounded-2xl bg-slate-950 px-4 py-2 text-white md:col-span-2" type="submit">Update goal</button>
+          <button className="rounded-2xl bg-slate-950 px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-60 md:col-span-2" type="submit" disabled={updateGoal.isPending}>Update goal</button>
         </form>
       </Modal>
 

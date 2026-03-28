@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { BarChart, Bar, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, LineChart, Line } from 'recharts';
 import { Card } from '../components/ui/Card';
+import { FieldLabel } from '../components/ui/FieldLabel';
 import { TabPanel, Tabs } from '../components/ui/Tabs';
 import { financeApi } from '../services/api';
 import { formatCurrency } from '../utils/format';
@@ -54,16 +55,28 @@ export function ReportsPage() {
       />
       <Card title="Filters" description="Filter reports by date range, account, and category.">
         <div className="grid gap-3 md:grid-cols-4">
-          <input className="w-full rounded-2xl border border-slate-200 px-4 py-3" type="date" placeholder="From date" value={from} onChange={(e) => setFrom(e.target.value)} />
-          <input className="w-full rounded-2xl border border-slate-200 px-4 py-3" type="date" placeholder="To date" value={to} onChange={(e) => setTo(e.target.value)} />
-          <select className="w-full rounded-2xl border border-slate-200 px-4 py-3" value={accountId} onChange={(e) => setAccountId(e.target.value)}>
-            <option value="">All accounts</option>
-            {accounts?.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}
-          </select>
-          <select className="w-full rounded-2xl border border-slate-200 px-4 py-3" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-            <option value="">All categories</option>
-            {categories?.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-          </select>
+          <div>
+            <FieldLabel htmlFor="report-filter-from" hint="Start date for report data.">From Date</FieldLabel>
+            <input id="report-filter-from" className="w-full rounded-2xl border border-slate-200 px-4 py-3" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          </div>
+          <div>
+            <FieldLabel htmlFor="report-filter-to" hint="End date for report data.">To Date</FieldLabel>
+            <input id="report-filter-to" className="w-full rounded-2xl border border-slate-200 px-4 py-3" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+          </div>
+          <div>
+            <FieldLabel htmlFor="report-filter-account" hint="Optional account filter for reports.">Account</FieldLabel>
+            <select id="report-filter-account" className="w-full rounded-2xl border border-slate-200 px-4 py-3" value={accountId} onChange={(e) => setAccountId(e.target.value)}>
+              <option value="">All accounts</option>
+              {accounts?.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <FieldLabel htmlFor="report-filter-category" hint="Optional category filter for reports.">Category</FieldLabel>
+            <select id="report-filter-category" className="w-full rounded-2xl border border-slate-200 px-4 py-3" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+              <option value="">All categories</option>
+              {categories?.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+            </select>
+          </div>
         </div>
       </Card>
 

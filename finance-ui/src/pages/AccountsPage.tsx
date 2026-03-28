@@ -149,24 +149,27 @@ export function AccountsPage() {
       <Tabs items={tabs} value={activeTab} onChange={setActiveTab} />
 
       <TabPanel active={activeTab} id="accounts">
-        <div className="grid gap-6 xl:grid-cols-[1fr_1.2fr]">
+        <div className="grid items-start gap-6 xl:grid-cols-[1fr_1.2fr]">
           <form
-            className="grid gap-3"
-            onSubmit={accountCreateForm.handleSubmit((values) => createAccount.mutate({
-              name: values.name,
-              type: accountTypeMap[values.type],
-              openingBalance: Number(values.openingBalance),
-              institutionName: values.institutionName || null,
-            }))}
+            className="grid self-start gap-3"
+            onSubmit={accountCreateForm.handleSubmit((values) => {
+              if (createAccount.isPending) return;
+              createAccount.mutate({
+                name: values.name,
+                type: accountTypeMap[values.type],
+                openingBalance: Number(values.openingBalance),
+                institutionName: values.institutionName || null,
+              });
+            })}
           >
             <div><FieldLabel htmlFor="account-name">Account Name</FieldLabel><input id="account-name" className="w-full rounded-2xl border border-slate-200 px-4 py-3" placeholder="e.g. HDFC Savings" {...accountCreateForm.register('name', { required: true })} /></div>
             <div><FieldLabel htmlFor="account-type">Account Type</FieldLabel><select id="account-type" className="w-full rounded-2xl border border-slate-200 px-4 py-3" {...accountCreateForm.register('type')}><option>Bank</option><option>CreditCard</option><option>CashWallet</option><option>Savings</option></select></div>
             <div><FieldLabel htmlFor="opening-balance">Opening Balance</FieldLabel><input id="opening-balance" className="w-full rounded-2xl border border-slate-200 px-4 py-3" type="number" step="0.01" placeholder="e.g. 50000" {...accountCreateForm.register('openingBalance', { required: true, min: 0 })} /></div>
             <div><FieldLabel htmlFor="institution-name">Institution Name</FieldLabel><input id="institution-name" className="w-full rounded-2xl border border-slate-200 px-4 py-3" placeholder="e.g. HDFC Bank" {...accountCreateForm.register('institutionName')} /></div>
-            <button className="rounded-2xl bg-brand-500 px-4 py-3 text-white" type="submit">Create account</button>
+            <button className="rounded-2xl bg-brand-500 px-4 py-3 text-white disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={createAccount.isPending}>Create account</button>
           </form>
 
-          <div className="space-y-3">
+          <div className="self-start space-y-3">
             {accounts?.map((account) => (
               <div key={account.id} className="rounded-2xl bg-slate-50 px-4 py-3">
                 <div className="flex items-start justify-between gap-3">
@@ -204,19 +207,22 @@ export function AccountsPage() {
       </TabPanel>
 
       <TabPanel active={activeTab} id="categories">
-        <div className="grid gap-6 xl:grid-cols-[1fr_1.2fr]">
+        <div className="grid items-start gap-6 xl:grid-cols-[1fr_1.2fr]">
           <form
-            className="grid gap-3"
-            onSubmit={categoryCreateForm.handleSubmit((values) => createCategory.mutate({ ...values, type: categoryTypeMap[values.type] }))}
+            className="grid self-start gap-3"
+            onSubmit={categoryCreateForm.handleSubmit((values) => {
+              if (createCategory.isPending) return;
+              createCategory.mutate({ ...values, type: categoryTypeMap[values.type] });
+            })}
           >
             <div><FieldLabel htmlFor="category-name">Category Name</FieldLabel><input id="category-name" className="w-full rounded-2xl border border-slate-200 px-4 py-3" placeholder="e.g. Groceries" {...categoryCreateForm.register('name', { required: true })} /></div>
             <div><FieldLabel htmlFor="category-type">Category Type</FieldLabel><select id="category-type" className="w-full rounded-2xl border border-slate-200 px-4 py-3" {...categoryCreateForm.register('type')}><option>Expense</option><option>Income</option></select></div>
             <div><FieldLabel htmlFor="category-color">Color</FieldLabel><input id="category-color" className="w-full h-12 rounded-2xl border border-slate-200 px-2 py-2" type="color" {...categoryCreateForm.register('color')} /></div>
             <div><FieldLabel htmlFor="category-icon">Icon</FieldLabel><input id="category-icon" className="w-full rounded-2xl border border-slate-200 px-4 py-3" placeholder="e.g. Utensils" {...categoryCreateForm.register('icon', { required: true })} /></div>
-            <button className="rounded-2xl bg-slate-950 px-4 py-3 text-white" type="submit">Create category</button>
+            <button className="rounded-2xl bg-slate-950 px-4 py-3 text-white disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={createCategory.isPending}>Create category</button>
           </form>
 
-          <div className="space-y-3">
+          <div className="self-start space-y-3">
             {categories?.map((category) => (
               <div key={category.id} className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
                 <div className="flex items-center gap-3">
@@ -256,7 +262,7 @@ export function AccountsPage() {
             <option value="">Select account</option>
             {accounts?.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}
           </select>
-          <button className="rounded-2xl border border-slate-300 px-4 py-2 text-sm text-slate-700" type="button" disabled={!sharedAccountId} onClick={() => setInviteModalOpen(true)}>Invite member</button>
+          <button className="rounded-2xl border border-slate-300 px-4 py-2 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-60" type="button" disabled={!sharedAccountId} onClick={() => setInviteModalOpen(true)}>Invite member</button>
           {sharedMembers?.map((member) => (
             <div key={member.userId} className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
               <div>
@@ -266,7 +272,7 @@ export function AccountsPage() {
               {member.role === 'Owner' ? (
                 <div className="rounded-xl bg-slate-900 px-3 py-1 text-xs font-semibold text-white">Owner</div>
               ) : (
-                <button className="rounded-xl border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700" type="button" onClick={() => updateMemberRole.mutate({ accountId: sharedAccountId, member })}>
+                <button className="rounded-xl border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 disabled:cursor-not-allowed disabled:opacity-60" type="button" disabled={updateMemberRole.isPending} onClick={() => updateMemberRole.mutate({ accountId: sharedAccountId, member })}>
                   Role: {member.role}
                 </button>
               )}
@@ -278,15 +284,19 @@ export function AccountsPage() {
       <Modal open={!!editingAccount} title="Edit account" onClose={() => setEditingAccount(null)}>
         <form
           className="grid gap-3"
-          onSubmit={accountEditForm.handleSubmit((values) => editingAccount ? updateAccount.mutate({
-            id: editingAccount.id,
-            payload: { name: values.name, type: accountTypeMap[values.type], institutionName: values.institutionName || null },
-          }) : null)}
+          onSubmit={accountEditForm.handleSubmit((values) => {
+            if (updateAccount.isPending) return;
+            if (!editingAccount) return;
+            updateAccount.mutate({
+              id: editingAccount.id,
+              payload: { name: values.name, type: accountTypeMap[values.type], institutionName: values.institutionName || null },
+            });
+          })}
         >
           <div><FieldLabel htmlFor="edit-account-name">Account Name</FieldLabel><input id="edit-account-name" className="w-full rounded-2xl border border-slate-200 px-4 py-3" placeholder="e.g. HDFC Savings" {...accountEditForm.register('name', { required: true })} /></div>
           <div><FieldLabel htmlFor="edit-account-type">Account Type</FieldLabel><select id="edit-account-type" className="w-full rounded-2xl border border-slate-200 px-4 py-3" {...accountEditForm.register('type')}><option>Bank</option><option>CreditCard</option><option>CashWallet</option><option>Savings</option></select></div>
           <div><FieldLabel htmlFor="edit-institution-name">Institution Name</FieldLabel><input id="edit-institution-name" className="w-full rounded-2xl border border-slate-200 px-4 py-3" placeholder="e.g. HDFC Bank" {...accountEditForm.register('institutionName')} /></div>
-          <button className="rounded-2xl bg-slate-950 px-4 py-3 text-white" type="submit">Update account</button>
+          <button className="rounded-2xl bg-slate-950 px-4 py-3 text-white disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={updateAccount.isPending}>Update account</button>
         </form>
       </Modal>
 
@@ -301,15 +311,19 @@ export function AccountsPage() {
       <Modal open={!!editingCategory} title="Edit category" onClose={() => setEditingCategory(null)}>
         <form
           className="grid gap-3"
-          onSubmit={categoryEditForm.handleSubmit((values) => editingCategory ? updateCategory.mutate({
-            id: editingCategory.id,
-            payload: { name: values.name, color: values.color, icon: values.icon, isArchived: editingCategory.isArchived },
-          }) : null)}
+          onSubmit={categoryEditForm.handleSubmit((values) => {
+            if (updateCategory.isPending) return;
+            if (!editingCategory) return;
+            updateCategory.mutate({
+              id: editingCategory.id,
+              payload: { name: values.name, color: values.color, icon: values.icon, isArchived: editingCategory.isArchived },
+            });
+          })}
         >
           <div><FieldLabel htmlFor="edit-category-name">Category Name</FieldLabel><input id="edit-category-name" className="w-full rounded-2xl border border-slate-200 px-4 py-3" placeholder="e.g. Groceries" {...categoryEditForm.register('name', { required: true })} /></div>
           <div><FieldLabel htmlFor="edit-category-color">Color</FieldLabel><input id="edit-category-color" className="w-full h-12 rounded-2xl border border-slate-200 px-2 py-2" type="color" {...categoryEditForm.register('color')} /></div>
           <div><FieldLabel htmlFor="edit-category-icon">Icon</FieldLabel><input id="edit-category-icon" className="w-full rounded-2xl border border-slate-200 px-4 py-3" placeholder="e.g. Utensils" {...categoryEditForm.register('icon', { required: true })} /></div>
-          <button className="rounded-2xl bg-slate-950 px-4 py-3 text-white" type="submit">Update category</button>
+          <button className="rounded-2xl bg-slate-950 px-4 py-3 text-white disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={updateCategory.isPending}>Update category</button>
         </form>
       </Modal>
 
@@ -325,7 +339,7 @@ export function AccountsPage() {
         <div className="space-y-3">
           <div><FieldLabel htmlFor="invite-email-modal">Email</FieldLabel><input id="invite-email-modal" className="w-full rounded-2xl border border-slate-200 px-4 py-3" placeholder="member@email.com" value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} /></div>
           <div><FieldLabel htmlFor="invite-role-modal">Role</FieldLabel><select id="invite-role-modal" className="w-full rounded-2xl border border-slate-200 px-4 py-3" value={inviteRole} onChange={(event) => setInviteRole(event.target.value as 'Editor' | 'Viewer')}><option>Editor</option><option>Viewer</option></select></div>
-          <button className="rounded-2xl bg-slate-950 px-4 py-3 text-white" type="button" onClick={() => inviteMember.mutate({ accountId: sharedAccountId, email: inviteEmail, role: inviteRole })}>Send invite</button>
+          <button className="rounded-2xl bg-slate-950 px-4 py-3 text-white disabled:cursor-not-allowed disabled:opacity-60" type="button" disabled={inviteMember.isPending} onClick={() => inviteMember.mutate({ accountId: sharedAccountId, email: inviteEmail, role: inviteRole })}>Send invite</button>
         </div>
       </Modal>
     </Card>

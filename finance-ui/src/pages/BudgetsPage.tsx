@@ -83,20 +83,23 @@ export function BudgetsPage() {
       <TabPanel active={activeTab} id="create">
         <form
           className="grid grid-cols-1 gap-3 md:grid-cols-2"
-          onSubmit={form.handleSubmit((values) => createMutation.mutate({
-            categoryId: values.categoryId,
-            accountId: values.accountId || null,
-            month: Number(values.month),
-            year: Number(values.year),
-            amount: Number(values.amount),
-            alertThresholdPercent: Number(values.alertThresholdPercent),
-          }))}
+          onSubmit={form.handleSubmit((values) => {
+            if (createMutation.isPending) return;
+            createMutation.mutate({
+              categoryId: values.categoryId,
+              accountId: values.accountId || null,
+              month: Number(values.month),
+              year: Number(values.year),
+              amount: Number(values.amount),
+              alertThresholdPercent: Number(values.alertThresholdPercent),
+            });
+          })}
         >
           <div><FieldLabel htmlFor="budget-category" hint="Pick the expense category this budget controls.">Category</FieldLabel><select id="budget-category" className="w-full rounded-2xl border border-slate-200 px-4 py-2" {...form.register('categoryId', { required: true })}><option value="">Select category</option>{categories?.filter((x) => x.type === 'Expense').map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></div>
           <div><FieldLabel htmlFor="budget-account" hint="Optional: limit this budget to one account.">Account (optional)</FieldLabel><select id="budget-account" className="w-full rounded-2xl border border-slate-200 px-4 py-2" {...form.register('accountId')}><option value="">All accessible accounts</option>{accounts?.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}</select></div>
           <div><FieldLabel htmlFor="budget-amount" hint="Enter the monthly budget limit for this category.">Budget Amount</FieldLabel><input id="budget-amount" className="w-full rounded-2xl border border-slate-200 px-4 py-2" type="number" step="0.01" placeholder="e.g. 10000" {...form.register('amount', { required: true, min: 0.01 })} /></div>
           <div><FieldLabel htmlFor="budget-threshold" hint="Alert when spending reaches this percent of budget.">Alert Threshold (%)</FieldLabel><input id="budget-threshold" className="w-full rounded-2xl border border-slate-200 px-4 py-2" type="number" min="1" max="100" placeholder="e.g. 80" {...form.register('alertThresholdPercent', { required: true, min: 1, max: 100 })} /></div>
-          <button className="rounded-2xl bg-brand-500 px-4 py-2 text-white md:col-span-2" type="submit">Save budget</button>
+          <button className="rounded-2xl bg-brand-500 px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-60 md:col-span-2" type="submit" disabled={createMutation.isPending}>Save budget</button>
         </form>
       </TabPanel>
 
@@ -143,6 +146,7 @@ export function BudgetsPage() {
         <form
           className="grid grid-cols-1 gap-3 md:grid-cols-2"
           onSubmit={editForm.handleSubmit((values) => {
+            if (updateMutation.isPending) return;
             if (!editingBudget) return;
             updateMutation.mutate({
               id: editingBudget.id,
@@ -155,7 +159,7 @@ export function BudgetsPage() {
         >
           <div><FieldLabel htmlFor="edit-budget-amount" hint="Update the budget limit amount.">Budget Amount</FieldLabel><input id="edit-budget-amount" className="w-full rounded-2xl border border-slate-200 px-4 py-2" type="number" step="0.01" placeholder="e.g. 10000" {...editForm.register('amount', { required: true, min: 0.01 })} /></div>
           <div><FieldLabel htmlFor="edit-budget-threshold" hint="Update the alert percentage trigger.">Alert Threshold (%)</FieldLabel><input id="edit-budget-threshold" className="w-full rounded-2xl border border-slate-200 px-4 py-2" type="number" min="1" max="100" placeholder="e.g. 80" {...editForm.register('alertThresholdPercent', { required: true, min: 1, max: 100 })} /></div>
-          <button className="rounded-2xl bg-slate-950 px-4 py-2 text-white md:col-span-2" type="submit">Update budget</button>
+          <button className="rounded-2xl bg-slate-950 px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-60 md:col-span-2" type="submit" disabled={updateMutation.isPending}>Update budget</button>
         </form>
       </Modal>
 

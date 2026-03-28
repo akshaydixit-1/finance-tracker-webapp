@@ -87,6 +87,7 @@ export function SharedAccountsPage() {
         <form
           className="grid gap-3 md:grid-cols-[1fr_1fr_1fr_auto] md:items-end"
           onSubmit={form.handleSubmit((values) => {
+            if (inviteMutation.isPending) return;
             inviteMutation.mutate({
               accountId: values.accountId,
               payload: { email: values.email, role: accountMemberRoleMap[values.role] },
@@ -96,7 +97,7 @@ export function SharedAccountsPage() {
           <div><FieldLabel htmlFor="shared-account-id">Account</FieldLabel><select id="shared-account-id" className="w-full rounded-2xl border border-slate-200 px-4 py-3" {...form.register('accountId', { required: true })}>{accounts?.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}</select></div>
           <div><FieldLabel htmlFor="invite-email">Invite email</FieldLabel><input id="invite-email" className="w-full rounded-2xl border border-slate-200 px-4 py-3" placeholder="member@email.com" {...form.register('email', { required: true })} /></div>
           <div><FieldLabel htmlFor="invite-role">Role</FieldLabel><select id="invite-role" className="w-full rounded-2xl border border-slate-200 px-4 py-3" {...form.register('role')}><option>Editor</option><option>Viewer</option></select></div>
-          <button className="rounded-2xl bg-slate-950 px-5 py-3 text-white" type="submit">Invite</button>
+          <button className="rounded-2xl bg-slate-950 px-5 py-3 text-white disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={inviteMutation.isPending}>Invite</button>
         </form>
       </TabPanel>
 
@@ -150,8 +151,9 @@ export function SharedAccountsPage() {
             </select>
           </div>
           <button
-            className="rounded-2xl bg-slate-950 px-4 py-3 text-white"
+            className="rounded-2xl bg-slate-950 px-4 py-3 text-white disabled:cursor-not-allowed disabled:opacity-60"
             type="button"
+            disabled={roleMutation.isPending}
             onClick={() => editingMember ? roleMutation.mutate({ accountId: selectedAccountId, userId: editingMember.userId, role: accountMemberRoleMap[editRole] }) : null}
           >
             Save role

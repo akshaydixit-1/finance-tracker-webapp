@@ -48,7 +48,7 @@ export function ProfilePage() {
             {isDark ? 'Dark' : 'Light'}
           </button>
         </div>
-        <button type="submit" className="mt-2 w-fit rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700">
+        <button type="submit" disabled={form.formState.isSubmitting} className="mt-2 w-fit rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60">
           Save Changes
         </button>
       </form>
