@@ -10,7 +10,7 @@ if (env.PROD && !configuredBaseUrl) {
   throw new Error('Missing VITE_API_BASE_URL for production build.');
 }
 
-const baseURL = configuredBaseUrl ?? 'http://localhost:5170/api';
+const baseURL = env.VITE_API_BASE_URL ?? 'https://fintrack-service.azurewebsites.net/api';
 
 export const api = axios.create({
   baseURL,
