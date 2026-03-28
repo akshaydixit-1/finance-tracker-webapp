@@ -130,8 +130,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         {
             entity.ToTable("rules");
             entity.HasKey(x => x.Id);
-            entity.Property(x => x.ConditionJson).HasColumnName("condition_json").HasColumnType("text");
-            entity.Property(x => x.ActionJson).HasColumnName("action_json").HasColumnType("text");
+            entity.Property(x => x.ConditionJson).HasColumnName("ConditionJson").HasColumnType("text");
+            entity.Property(x => x.ActionJson).HasColumnName("ActionJson").HasColumnType("text");
             entity.Property(x => x.ConditionField).HasConversion<string>();
             entity.Property(x => x.ConditionOperator).HasConversion<string>();
             entity.Property(x => x.ConditionValue).HasMaxLength(240);
